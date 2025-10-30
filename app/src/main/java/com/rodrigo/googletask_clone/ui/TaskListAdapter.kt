@@ -14,6 +14,7 @@ import com.rodrigo.googletask_clone.data.Task
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
+import android.graphics.Paint
 
 class TaskListAdapter(
     private val onTaskCheckedChanged: (Task, Boolean) -> Unit,
@@ -68,6 +69,13 @@ class TaskListAdapter(
         fun bind(item: TaskListItem.TaskItem, isExpanded: Boolean, onCheck: (Task, Boolean) -> Unit, onClick: (Task) -> Unit, onExpand: (Task) -> Unit) {
             val task = item.task
             title.text = task.title
+            if (task.isCompleted) {
+                title.paintFlags = title.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                title.alpha = 0.6f
+            } else {
+                title.paintFlags = title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                title.alpha = 1.0f
+            }
 
             checkbox.setOnCheckedChangeListener(null)
             checkbox.isChecked = task.isCompleted
@@ -99,6 +107,13 @@ class TaskListAdapter(
 
         fun bind(task: Task, onCheck: (Task, Boolean) -> Unit, onClick: (Task) -> Unit) {
             title.text = task.title
+            if (task.isCompleted) {
+                title.paintFlags = title.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                title.alpha = 0.6f
+            } else {
+                title.paintFlags = title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                title.alpha = 1.0f
+            }
             
             checkbox.setOnCheckedChangeListener(null)
             checkbox.isChecked = task.isCompleted
@@ -128,6 +143,13 @@ class TaskListAdapter(
 
         fun bind(task: Task, onCheck: (Task, Boolean) -> Unit, onClick: (Task) -> Unit) {
             title.text = task.title
+            if (task.isCompleted) {
+                title.paintFlags = title.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                title.alpha = 0.6f
+            } else {
+                title.paintFlags = title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                title.alpha = 1.0f
+            }
 
             checkbox.setOnCheckedChangeListener(null)
             checkbox.isChecked = task.isCompleted
