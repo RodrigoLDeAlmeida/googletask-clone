@@ -198,12 +198,16 @@ class AddEditTaskActivity : AppCompatActivity() {
             categorySpinner.visibility = View.GONE
             categoryLabel.visibility = View.GONE
             supportActionBar?.title = if (currentTask == null) "Nova Subtarefa" else "Editar Subtarefa"
+            if (currentTask == null) {
+                markCompletedButton.visibility = View.GONE
+            }
         } else {
             supportActionBar?.title = if (currentTask == null) "Nova Tarefa" else "Editar Tarefa"
             if (currentTask != null) {
                 addSubtaskButton.setOnClickListener { openSubtaskCreation() }
             } else {
                 subtaskSection.visibility = View.GONE
+                markCompletedButton.visibility = View.GONE
             }
         }
     }
@@ -284,6 +288,9 @@ class AddEditTaskActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.add_edit_task_menu, menu)
+        if (currentTask == null) {
+            menu.findItem(R.id.action_delete_task)?.isVisible = false
+        }
         return true
     }
 
