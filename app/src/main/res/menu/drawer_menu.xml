@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/category_group" android:checkableBehavior="single">
+        <!-- As categorias/listas serão injetadas aqui dinamicamente -->
+    </group>
+
+    <item android:title="Ações">
+        <menu>
+            <item
+                android:id="@+id/action_dark_mode"
+                android:title="Dark Mode"
+                android:icon="@android:drawable/ic_menu_compass"
+                app:actionViewClass="com.google.android.material.switchmaterial.SwitchMaterial" />
+            <item
+                android:id="@+id/action_new_list"
+                android:icon="@android:drawable/ic_menu_add"
+                android:title="Criar nova lista" />
+        </menu>
+    </item>
+</menu>
