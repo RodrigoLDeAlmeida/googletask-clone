@@ -3,11 +3,20 @@ package com.rodrigo.googletask_clone
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.net.Uri
+import android.os.Environment
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -45,6 +54,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val expandedTaskIds = mutableSetOf<Int>()
 
     private val addEditTaskLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { /* Opcional: Tratar resultado */ }
+    private val createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) {
+            writeCsvToUri(uri)
+        }
+    }
+
+    private var pendingCsvData: String? = null
+    private var pendingCsvSuggestedName: String = "completed_tasks.csv"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -187,6 +204,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             else -> when (item.itemId) {
                 R.id.action_new_list -> showCreateListDialog()
+                R.id.action_export_completed -> showExportOptions()
             }
         }
         drawerLayout.closeDrawer(GravityCompat.START)
@@ -222,6 +240,68 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             putExtra(AddEditTaskActivity.EXTRA_TASK, task)
         }
         addEditTaskLauncher.launch(intent)
+    }
+
+    private fun showExportOptions() {
+        val completed = completedTasks.map { it.task }
+        if (completed.isEmpty()) {
+            Toast.makeText(this, "Não há tarefas concluídas", Toast.LENGTH_SHORT).show()
+            return
+        }
+        pendingCsvData = buildCompletedCsv(completed)
+        pendingCsvSuggestedName = "completed_tasks_${System.currentTimeMillis()}.csv"
+
+        AlertDialog.Builder(this)
+            .setTitle("Exportar concluídas")
+            .setItems(arrayOf("Salvar arquivo...", "Compartilhar...")) { _, which ->
+                when (which) {
+                    0 -> createDocumentLauncher.launch(pendingCsvSuggestedName)
+                    1 -> shareCompletedCsv()
+                }
+            }
+            .show()
+    }
+
+    private fun buildCompletedCsv(tasks: List<Task>): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val header = "title,description,dueDate,categoryId\n"
+        val rows = tasks.joinToString("\n") { task ->
+            val title = task.title.replace('"', '\'').replace(',', ' ')
+            val desc = (task.description ?: "").replace('"', '\'').replace(',', ' ')
+            val due = task.dueDate?.let { sdf.format(Date(it)) } ?: ""
+            val category = task.categoryId?.toString() ?: ""
+            "\"$title\",\"$desc\",\"$due\",\"$category\""
+        }
+        return header + rows
+    }
+
+    private fun writeCsvToUri(uri: Uri) {
+        val data = pendingCsvData ?: return
+        try {
+            contentResolver.openOutputStream(uri)?.use { out ->
+                out.write(data.toByteArray())
+            }
+            Toast.makeText(this, "Arquivo salvo", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Falha ao salvar: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun shareCompletedCsv() {
+        val data = pendingCsvData ?: return
+        try {
+            val file = File(cacheDir, pendingCsvSuggestedName)
+            FileWriter(file).use { it.write(data) }
+            val uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/csv"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, "Compartilhar CSV"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Falha ao compartilhar: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun showCreateListDialog() {

@@ -13,6 +13,10 @@
                 android:icon="@android:drawable/ic_menu_compass"
                 app:actionViewClass="com.google.android.material.switchmaterial.SwitchMaterial" />
             <item
+                android:id="@+id/action_export_completed"
+                android:icon="@android:drawable/ic_menu_save"
+                android:title="Exportar concluídas (.csv)" />
+            <item
                 android:id="@+id/action_new_list"
                 android:icon="@android:drawable/ic_menu_add"
                 android:title="Criar nova lista" />
