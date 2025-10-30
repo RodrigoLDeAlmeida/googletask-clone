@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
@@ -23,6 +25,8 @@ class AddTaskBottomSheet : BottomSheetDialogFragment() {
 
     private val taskViewModel: TaskViewModel by activityViewModels()
     private var dueDate: Calendar? = null
+    private lateinit var categorySpinner: Spinner
+    private var spinnerCategories: List<com.rodrigo.googletask_clone.data.Category> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,6 +44,21 @@ class AddTaskBottomSheet : BottomSheetDialogFragment() {
         val dateTimeTextView = view.findViewById<TextView>(R.id.new_task_date_time)
         val saveButton = view.findViewById<Button>(R.id.button_save_new)
         val cancelButton = view.findViewById<Button>(R.id.button_cancel)
+        categorySpinner = view.findViewById(R.id.new_task_category_spinner)
+
+        // Preenche spinner de categorias
+        taskViewModel.allCategories.observe(viewLifecycleOwner) { categories ->
+            spinnerCategories = categories
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, categories.map { it.name })
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            categorySpinner.adapter = adapter
+
+            // Se houver uma categoria previamente selecionada no filtro, selecionar como padrão
+            taskViewModel.selectedCategoryId.value?.let { selectedId ->
+                val position = categories.indexOfFirst { it.id == selectedId }
+                if (position >= 0) categorySpinner.setSelection(position)
+            }
+        }
 
         dateTimeTextView.setOnClickListener { showDateTimePicker(dateTimeTextView) }
         cancelButton.setOnClickListener { dismiss() }
@@ -52,7 +71,8 @@ class AddTaskBottomSheet : BottomSheetDialogFragment() {
             }
 
             val details = detailsEditText.text.toString()
-            val categoryId = taskViewModel.selectedCategoryId.value
+            val selectedPosition = categorySpinner.selectedItemPosition
+            val categoryId = spinnerCategories.getOrNull(selectedPosition)?.id
             val newTask = Task(
                 title = title,
                 description = details,
